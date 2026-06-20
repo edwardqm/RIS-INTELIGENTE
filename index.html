@@ -108,7 +108,10 @@ textarea.fc{resize:vertical}
         <div style="font-size:9px;color:var(--dim);letter-spacing:1px">DETALLE DE INCIDENTE — SOLO LECTURA</div>
         <div id="detid" style="font-size:18px;font-weight:800;color:var(--accent)"></div>
       </div>
-      <button onclick="closeDetail()" class="btn bgh" style="padding:7px 12px;font-size:12px;flex-shrink:0">✕ Cerrar</button>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button onclick="deleteFromDetail()" class="btn" style="background:var(--red);color:#fff;padding:7px 12px;font-size:12px;white-space:nowrap">🗑 Eliminar</button>
+        <button onclick="closeDetail()" class="btn bgh" style="padding:7px 12px;font-size:12px;white-space:nowrap">✕ Cerrar</button>
+      </div>
     </div>
     <div id="detbody"></div>
   </div>
@@ -224,7 +227,8 @@ textarea.fc{resize:vertical}
         <option value="Todos">Estado: Todos</option>
         <option>Abierto</option><option>En proceso</option><option>Cerrado</option>
       </select>
-      <button class="btn ba" style="margin-left:auto" onclick="togForm()">+ Nuevo</button>
+      <button class="btn" style="margin-left:auto;background:transparent;border:1px solid var(--red);color:var(--red);padding:6px 14px;font-size:12px" onclick="clearHistory()">🗑 Limpiar historial</button>
+      <button class="btn ba" onclick="togForm()">+ Nuevo</button>
     </div>
     <!-- FORM -->
     <div id="incform" style="display:none" class="pn">
@@ -299,7 +303,7 @@ textarea.fc{resize:vertical}
     <div style="font-size:9px;color:var(--dim);padding:0 2px 6px">💡 Doble clic / doble toque sobre una fila para ver el detalle en pantalla completa (solo lectura).</div>
     <div class="tw">
       <table><thead><tr>
-        <th>ID</th><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Subtipo</th><th>Ubicación</th><th>Criticidad</th><th>Estado</th>
+        <th>ID</th><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Subtipo</th><th>Ubicación</th><th>Criticidad</th><th>Estado</th><th></th>
       </tr></thead>
       <tbody id="itbody"></tbody></table>
     </div>
@@ -480,7 +484,7 @@ var INCS = [
   {id:'RIS-010',fecha:'2026-06-07',hora:'21:55',tipo:'Seguridad Patrimonial',subtipo:'Robo',zona:'Zona Piura',instTipo:'Planta',instNombre:'Planta Principal',areaTrab:'Operaciones',area:'Zona Piura · Planta Principal · Operaciones',criticidad:'Crítico',lat:-12.047,lng:-77.044,estado:'En proceso',desc:'Robo múltiple nocturno.',acc:'Caso en Fiscalía.'}
 ];
 
-var fTipo='Todos', chatHist=[], aiTxt='', formOpen=false;
+var fTipo='Todos', chatHist=[], aiTxt='', formOpen=false, detCurrentId='';
 
 // ═══════════════════════════════════════════════════════
 // CONFIG IA — Gemini (Google), capa gratuita, sin tarjeta.
@@ -726,9 +730,9 @@ function renderReg(){
   if(fil.length){
     for(var i=0;i<fil.length;i++){
       var inc=fil[i];
-      th+='<tr ondblclick="openDetail(\''+inc.id+'\')" style="cursor:pointer" title="Doble clic para ver detalle"><td style="color:var(--accent);font-weight:700">'+inc.id+'</td><td>'+inc.fecha+'</td><td>'+inc.hora+'</td><td>'+inc.tipo+'</td><td>'+inc.subtipo+'</td><td>'+inc.area+'</td><td>'+bdg(inc.criticidad,CC[inc.criticidad])+'</td><td>'+bdg(inc.estado,EC[inc.estado])+'</td></tr>';
+      th+='<tr ondblclick="openDetail(\''+inc.id+'\')" style="cursor:pointer" title="Doble clic para ver detalle"><td style="color:var(--accent);font-weight:700">'+inc.id+'</td><td>'+inc.fecha+'</td><td>'+inc.hora+'</td><td>'+inc.tipo+'</td><td>'+inc.subtipo+'</td><td>'+inc.area+'</td><td>'+bdg(inc.criticidad,CC[inc.criticidad])+'</td><td>'+bdg(inc.estado,EC[inc.estado])+'</td><td><button onclick="event.stopPropagation();deleteIncConfirm(\''+inc.id+'\')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px" title="Eliminar registro">🗑</button></td></tr>';
     }
-  } else th='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--dim)">Sin resultados.</td></tr>';
+  } else th='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--dim)">Sin resultados.</td></tr>';
   document.getElementById('itbody').innerHTML=th;
 }
 function setFT(t){ fTipo=t; renderReg(); }
@@ -827,6 +831,7 @@ function openDetail(id){
   var inc=null;
   for(var i=0;i<INCS.length;i++){ if(INCS[i].id===id){ inc=INCS[i]; break; } }
   if(!inc) return;
+  detCurrentId=inc.id;
   document.getElementById('detid').textContent=inc.id;
   var rows=[
     ['Fecha',inc.fecha],['Hora',inc.hora],
@@ -850,7 +855,37 @@ function openDetail(id){
   document.getElementById('detbody').innerHTML=h;
   document.getElementById('detmodal').style.display='block';
 }
-function closeDetail(){ document.getElementById('detmodal').style.display='none'; }
+function closeDetail(){ document.getElementById('detmodal').style.display='none'; detCurrentId=''; }
+
+// ═══════════════════════════════════════════════════════
+// ELIMINAR REGISTROS / LIMPIAR HISTORIAL
+// ═══════════════════════════════════════════════════════
+function deleteInc(id){
+  for(var i=0;i<INCS.length;i++){
+    if(INCS[i].id===id){ INCS.splice(i,1); break; }
+  }
+  renderReg();
+  toast('🗑 '+id+' eliminado');
+}
+function deleteIncConfirm(id){
+  if(confirm('¿Eliminar el registro '+id+'? Esta acción no se puede deshacer.')) deleteInc(id);
+}
+function deleteFromDetail(){
+  if(!detCurrentId) return;
+  var id=detCurrentId;
+  if(confirm('¿Eliminar el registro '+id+'? Esta acción no se puede deshacer.')){
+    closeDetail();
+    deleteInc(id);
+  }
+}
+function clearHistory(){
+  if(!INCS.length){ toast('No hay registros para eliminar'); return; }
+  if(confirm('¿Eliminar TODOS los '+INCS.length+' registros del historial? Esta acción no se puede deshacer.')){
+    INCS=[];
+    renderReg();
+    toast('🗑 Historial eliminado');
+  }
+}
 
 // ═══════════════════════════════════════════════════════
 // PANEL DE CONTROL — DATOS MAESTROS (clave 0000)
