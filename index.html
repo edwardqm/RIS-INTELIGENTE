@@ -388,6 +388,20 @@ var INCS = [
 var fTipo='Todos', chatHist=[], aiTxt='', formOpen=false;
 
 // ═══════════════════════════════════════════════════════
+// CONFIG IA — Gemini (Google), capa gratuita, sin tarjeta.
+// 1) Ve a aistudio.google.com/app/apikey → inicia sesión con tu
+//    cuenta Google → "Create API key" → copia la llave.
+// 2) Pégala abajo, reemplazando el texto de ejemplo.
+// ⚠ Esta llave queda visible en el código. Como es gratuita y sin
+//   tarjeta, lo peor que puede pasar es que se agote tu cupo del día
+//   (no hay riesgo de cobro). Si más adelante quieres ocultarla del
+//   todo, se puede mover a un backend — por ahora esto es lo más
+//   simple y funcional para empezar.
+// ═══════════════════════════════════════════════════════
+var GEMINI_API_KEY = 'AQ.Ab8RN6JUB03wklXopAqULTcxHs5aj6hoCJE1HFjsqfFiODyhBg';
+var GEMINI_MODEL = 'gemini-2.5-flash';
+
+// ═══════════════════════════════════════════════════════
 // RELOJ
 // ═══════════════════════════════════════════════════════
 function tick() {
@@ -1009,30 +1023,40 @@ function localChat(msg){
 // AI (con timeout y fallback)
 // ═══════════════════════════════════════════════════════
 function callAI(prompt, sys, callback){
+  if(!GEMINI_API_KEY || GEMINI_API_KEY.indexOf('PEGA_TU_LLAVE')>=0){
+    callback(null,'nokey');
+    return;
+  }
   var done=false;
   var timer=setTimeout(function(){
     if(!done){ done=true; callback(null,'timeout'); }
   },18000);
   try{
     var xhr=new XMLHttpRequest();
-    xhr.open('POST','https://api.anthropic.com/v1/messages',true);
+    var url='https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent';
+    xhr.open('POST',url,true);
     xhr.setRequestHeader('Content-Type','application/json');
+    xhr.setRequestHeader('x-goog-api-key',GEMINI_API_KEY);
     xhr.onload=function(){
       if(done) return;
       done=true; clearTimeout(timer);
       try{
         var d=JSON.parse(xhr.responseText);
-        var txt='';
-        if(d.content) for(var i=0;i<d.content.length;i++) if(d.content[i].text) txt+=d.content[i].text;
+        if(xhr.status<200||xhr.status>=300){ callback(null,'http'); return; }
+        var cand=d.candidates&&d.candidates[0];
+        var parts=cand&&cand.content&&cand.content.parts;
+        var txt=parts?parts.map(function(p){return p.text||'';}).join(''):'';
         callback(txt||'Sin respuesta.',null);
       }catch(e){ callback(null,'parse'); }
     };
     xhr.onerror=function(){ if(!done){done=true;clearTimeout(timer);callback(null,'network');} };
     xhr.ontimeout=function(){ if(!done){done=true;clearTimeout(timer);callback(null,'timeout');} };
     xhr.timeout=17000;
-    var body={model:'claude-sonnet-4-6',max_tokens:1000};
-    if(sys) body.system=sys;
-    body.messages=[{role:'user',content:prompt}];
+    var body={
+      contents:[{role:'user',parts:[{text:prompt}]}],
+      generationConfig:{maxOutputTokens:1000,temperature:0.7}
+    };
+    if(sys) body.system_instruction={parts:[{text:sys}]};
     xhr.send(JSON.stringify(body));
   }catch(e){
     if(!done){done=true;clearTimeout(timer);callback(null,'error');}
