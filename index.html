@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#050d1a"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="RIS Intelligence"/>
+<meta name="description" content="Sistema de Reporte de Incidentes y Análisis Criminal Táctico Geográfico"/>
+<title>RIS Intelligence</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#050d1a;--panel:#0a1628;--card:#0e1e36;--border:#1a3050;
+  --accent:#00d4ff;--green:#00ff9d;--amber:#ffb800;--red:#ff3d5a;
+  --purple:#a855f7;--text:#c8dff0;--dim:#4a6b8a;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden;}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
+/* Header */
+#header{background:#030a15;border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;}
+.logo-box{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.logo-text{font-size:13px;font-weight:800;letter-spacing:2px;color:#fff;}
+.logo-text span{color:var(--accent);}
+.logo-sub{font-size:8px;color:var(--dim);letter-spacing:1px;margin-top:1px;}
+.header-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#clock-time{font-size:12px;font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums;text-align:right;}
+#clock-date{font-size:8px;color:var(--dim);}
+#risk-badge{padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700;}
+/* Nav */
+#nav{background:#030a15;border-bottom:1px solid var(--border);display:flex;gap:3px;padding:5px 10px;overflow-x:auto;flex-shrink:0;scrollbar-width:none;}
+#nav::-webkit-scrollbar{display:none;}
+.nav-btn{background:transparent;border:1px solid var(--border);color:var(--dim);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;transition:all .15s;font-family:inherit;}
+.nav-btn.active{background:rgba(0,212,255,.12);border-color:var(--accent);color:var(--accent);}
+/* Content */
+#content{flex:1;overflow-y:auto;padding:12px 14px 16px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+/* Panels */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;}
+/* Section header */
+.sec-hdr{border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.sec-icon{font-size:18px;}
+.sec-title{font-size:14px;font-weight:700;color:var(--accent);letter-spacing:1px;}
+.sec-sub{font-size:9px;color:var(--dim);margin-top:1px;}
+/* KPI row */
+.kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;flex:1;min-width:110px;}
+.kpi-val{font-size:24px;font-weight:700;letter-spacing:1px;}
+.kpi-lbl{font-size:11px;color:var(--text);margin-top:2px;}
+.kpi-sub{font-size:9px;color:var(--dim);margin-top:3px;}
+/* Badge */
+.badge{display:inline-block;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:600;letter-spacing:.4px;}
+/* Table */
+.tbl-wrap{border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+th{padding:9px 10px;text-align:left;color:var(--dim);font-weight:600;font-size:10px;letter-spacing:.5px;background:#0a1628;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:8px 10px;border-bottom:1px solid rgba(26,48,80,.4);white-space:nowrap;}
+tr:nth-child(even) td{background:rgba(14,30,54,.6);}
+/* Form */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:10px;}
+.form-lbl{font-size:9px;color:var(--dim);margin-bottom:3px;}
+.form-ctrl{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:6px;font-size:12px;font-family:inherit;}
+.form-ctrl:focus{outline:none;border-color:var(--accent);}
+.auto-field{background:var(--bg);border:1px solid var(--border);color:var(--accent);padding:6px 9px;border-radius:6px;font-size:12px;font-weight:600;}
+textarea.form-ctrl{resize:vertical;}
+/* Buttons */
+.btn{border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;transition:all .15s;}
+.btn-primary{background:var(--accent);color:#000;padding:7px 18px;font-size:12px;}
+.btn-success{background:var(--green);color:#000;padding:7px 18px;font-size:12px;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--dim);padding:7px 14px;font-size:12px;}
+/* Filters */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.filter-btn{background:transparent;border:1px solid var(--border);color:var(--dim);padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;}
+.filter-btn.active{background:rgba(0,212,255,.12);border-color:var(--accent);color:var(--accent);}
+select.form-ctrl{cursor:pointer;}
+/* Two-col layout */
+.two-col{display:flex;gap:14px;flex-wrap:wrap;}
+.col-main{flex:2;min-width:260px;}
+.col-side{flex:1;min-width:200px;}
+/* Progress bar */
+.prog-bar{background:var(--border);border-radius:4px;height:4px;margin-top:3px;}
+.prog-fill{height:4px;border-radius:4px;background:var(--accent);}
+/* Alert item */
+.alert-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);}
+/* Rec item */
+.rec-item{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);border-radius:8px;padding:8px 11px;font-size:11px;color:var(--text);flex:1 1 240px;}
+/* SVG map */
+#map-svg{width:100%;border-radius:8px;display:block;}
+/* Chat */
+#chat-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;min-height:180px;max-height:280px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;}
+.chat-msg{max-width:85%;padding:8px 11px;border-radius:8px;font-size:11px;line-height:1.6;white-space:pre-wrap;}
+.chat-user{align-self:flex-end;background:rgba(0,212,255,.12);border:1px solid var(--accent);color:var(--text);}
+.chat-ai{align-self:flex-start;background:var(--card);border:1px solid var(--border);color:var(--text);}
+.chat-ai-lbl{font-size:9px;color:var(--green);font-weight:700;margin-bottom:3px;}
+.chat-input-row{display:flex;gap:8px;}
+.chat-input-row input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:6px;font-size:12px;font-family:inherit;}
+.chat-input-row input:focus{outline:none;border-color:var(--accent);}
+/* Speedometer */
+#speedometer-wrap{text-align:center;}
+/* Heat tiles */
+.heat-tiles{display:flex;gap:8px;flex-wrap:wrap;}
+.heat-tile{border-radius:8px;padding:10px 14px;min-width:110px;text-align:center;}
+.heat-num{font-size:22px;font-weight:800;}
+.heat-lbl{font-size:10px;margin-top:2px;}
+/* Profile grid */
+.profile-grid{display:flex;flex-wrap:wrap;gap:16px;}
+.profile-item{min-width:150px;}
+.profile-key{font-size:9px;color:var(--dim);margin-bottom:2px;}
+.profile-val{font-size:12px;font-weight:600;}
+/* KPI table */
+.kpi-tbl-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);}
+/* Analysis box */
+#analysis-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;color:var(--text);line-height:1.7;white-space:pre-wrap;max-height:340px;overflow-y:auto;}
+/* Footer */
+#footer{background:#030a15;border-top:1px solid var(--border);padding:6px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:3px;flex-shrink:0;}
+#footer span{font-size:8px;color:var(--dim);}
+#footer .author{color:var(--accent);font-weight:700;}
+/* Map legend */
+.legend-item{display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+/* Criticidad display in form */
+.crit-display{padding:6px 9px;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:.5px;}
+/* Tab screens hidden/shown */
+.screen{display:none;}.screen.active{display:block;}
+/* Toast */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="logo-box">🛡</div>
+      <div>
+        <div class="logo-text">RIS <span>INTELLIGENCE</span></div>
+        <div class="logo-sub">ANÁLISIS CRIMINAL TÁCTICO GEOGRÁFICO</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div>
+        <div id="clock-time">00:00:00</div>
+        <div id="clock-date"></div>
+      </div>
+      <div id="risk-badge">— RIESGO</div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div id="nav">
+    <button class="nav-btn active" onclick="showTab('dashboard')">⚡ Dashboard</button>
+    <button class="nav-btn" onclick="showTab('registro')">📋 Registro</button>
+    <button class="nav-btn" onclick="showTab('analisis')">🎯 Análisis</button>
+    <button class="nav-btn" onclick="showTab('mapa')">🗺️ Mapa</button>
+    <button class="nav-btn" onclick="showTab('intel')">🤖 Inteligencia</button>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div id="screen-dashboard" class="screen active">
+      <div class="sec-hdr"><span class="sec-icon">⚡</span><div><div class="sec-title">DASHBOARD EJECUTIVO</div><div class="sec-sub">Vista consolidada del estado operacional de seguridad</div></div></div>
+      <div class="kpi-row" id="kpi-row"></div>
+      <div class="two-col">
+        <div class="col-main">
+          <div class="panel">
+            <div style="font-size:11px;color:var(--red);font-weight:700;margin-bottom:10px;letter-spacing:1px;">🔴 ALERTAS ACTIVAS</div>
+            <div id="alerts-list"></div>
+          </div>
+          <div class="panel">
+            <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:10px;letter-spacing:1px;">📊 DISTRIBUCIÓN POR TIPO</div>
+            <div id="dist-chart"></div>
+          </div>
+        </div>
+        <div class="col-side">
+          <div class="panel" id="speedometer-wrap">
+            <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:8px;letter-spacing:1px;">🎯 NIVEL DE RIESGO</div>
+            <svg id="gauge-svg" width="120" height="80" viewBox="0 0 120 80" style="display:block;margin:0 auto;"></svg>
+          </div>
+          <div class="panel">
+            <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:8px;letter-spacing:1px;">🔮 PREDICCIÓN MSD</div>
+            <div id="msd-panel"></div>
+          </div>
+          <div class="panel">
+            <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:8px;letter-spacing:1px;">🕷 SPIDER MEAN</div>
+            <div id="spider-panel"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:10px;letter-spacing:1px;">💡 RECOMENDACIONES TÁCTICAS</div>
+        <div id="recomendaciones" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      </div>
+    </div>
+
+    <!-- REGISTRO -->
+    <div id="screen-registro" class="screen">
+      <div class="sec-hdr"><span class="sec-icon">📋</span><div><div class="sec-title">REGISTRO DE INCIDENTES</div><div class="sec-sub">Módulo RIS — Captura y gestión de eventos de seguridad</div></div></div>
+      <div class="filter-row" id="filter-tipo-row"></div>
+      <div class="filter-row" style="margin-top:-6px;">
+        <select id="filter-crit" class="form-ctrl" style="width:auto;" onchange="renderRegistro()">
+          <option value="Todos">Criticidad: Todos</option>
+          <option>Crítico</option><option>Alto</option><option>Medio</option><option>Bajo</option>
+        </select>
+        <select id="filter-est" class="form-ctrl" style="width:auto;" onchange="renderRegistro()">
+          <option value="Todos">Estado: Todos</option>
+          <option>Abierto</option><option>En proceso</option><option>Cerrado</option>
+        </select>
+        <button class="btn btn-primary" style="margin-left:auto;" onclick="toggleForm()">+ Nuevo Incidente</button>
+      </div>
+
+      <!-- FORM -->
+      <div id="inc-form" style="display:none;" class="panel" style="border-color:rgba(0,212,255,.3);">
+        <div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:12px;letter-spacing:1px;">REGISTRAR NUEVO INCIDENTE</div>
+        <div class="form-grid">
+          <div><div class="form-lbl">Fecha (automática del dispositivo)</div><div class="auto-field" id="form-fecha">—</div></div>
+          <div><div class="form-lbl">Hora (automática del dispositivo)</div><div class="auto-field" id="form-hora">—</div></div>
+          <div><div class="form-lbl">Área / Zona</div><input class="form-ctrl" id="f-area" placeholder="Ej: Perímetro Norte"/></div>
+          <div style="grid-column:1/-1;">
+            <div class="form-lbl">Coordenadas GPS</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input class="form-ctrl" id="f-lat" placeholder="Latitud" style="flex:1;min-width:120px;" readonly/>
+              <input class="form-ctrl" id="f-lng" placeholder="Longitud" style="flex:1;min-width:120px;" readonly/>
+              <button class="btn" id="btn-gps" onclick="captureGPS()"
+                style="background:var(--green);color:#000;padding:6px 14px;font-size:12px;white-space:nowrap;flex-shrink:0;">
+                📍 Capturar GPS
+              </button>
+            </div>
+            <div id="gps-status" style="font-size:10px;color:var(--dim);margin-top:4px;">Presione el botón para capturar su ubicación actual.</div>
+          </div>
+          <div>
+            <div class="form-lbl">Tipo</div>
+            <select class="form-ctrl" id="f-tipo" onchange="onTipoChange()">
+              <option>Seguridad Patrimonial</option><option>BASC</option><option>Seguridad Alimentaria</option>
+              <option>Defensa Alimentaria</option><option>Seguridad Vial</option><option>SSOMA</option>
+            </select>
+          </div>
+          <div>
+            <div class="form-lbl">Subtipo</div>
+            <select class="form-ctrl" id="f-subtipo" onchange="onSubtipoChange()"></select>
+          </div>
+          <div>
+            <div class="form-lbl">Criticidad (automática)</div>
+            <div class="crit-display" id="f-crit-display">● —</div>
+          </div>
+          <div>
+            <div class="form-lbl">Estado</div>
+            <select class="form-ctrl" id="f-estado">
+              <option>Abierto</option><option>En proceso</option><option>Cerrado</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="form-lbl">Descripción del incidente</div>
+          <textarea class="form-ctrl" id="f-desc" rows="2" placeholder="Describe el incidente detalladamente..."></textarea>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div class="form-lbl">Acciones inmediatas tomadas</div>
+          <textarea class="form-ctrl" id="f-acc" rows="2" placeholder="Acciones inmediatas, medidas correctivas..."></textarea>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-success" onclick="addIncident()">✔ Registrar Incidente</button>
+          <button class="btn btn-ghost" onclick="toggleForm()">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table><thead><tr>
+          <th>ID</th><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Subtipo</th><th>Área</th><th>Criticidad</th><th>Estado</th>
+        </tr></thead>
+        <tbody id="inc-table-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ANALISIS -->
+    <div id="screen-analisis" class="screen">
+      <div class="sec-hdr"><span class="sec-icon">🎯</span><div><div class="sec-title">ANÁLISIS CRIMINAL TÁCTICO</div><div class="sec-sub">Metodología integrada: Gottlieb + Spider Mean + MSD</div></div></div>
+      <div class="two-col">
+        <div class="panel col-main" id="gottlieb-panel"></div>
+        <div class="panel col-side" id="spider-analysis-panel"></div>
+        <div class="panel col-main" id="msd-analysis-panel"></div>
+      </div>
+      <div class="panel">
+        <div style="font-size:11px;color:var(--amber);font-weight:700;margin-bottom:10px;letter-spacing:1px;">👤 PERFIL ESTIMADO DEL ACTOR</div>
+        <div class="profile-grid" id="profile-grid"></div>
+      </div>
+      <div class="panel">
+        <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:10px;letter-spacing:1px;">🌡 HEAT MAP DE RIESGO DELICTIVO</div>
+        <div class="heat-tiles" id="heat-tiles"></div>
+      </div>
+    </div>
+
+    <!-- MAPA -->
+    <div id="screen-mapa" class="screen">
+      <div class="sec-hdr"><span class="sec-icon">🗺️</span><div><div class="sec-title">MAPA TÁCTICO INTELIGENTE</div><div class="sec-sub">Visualización georreferenciada — Gottlieb + Spider Mean + MSD</div></div></div>
+      <div class="panel" style="padding:8px;">
+        <svg id="map-svg" viewBox="0 0 600 380"></svg>
+      </div>
+      <div class="two-col">
+        <div class="panel col-main">
+          <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:10px;letter-spacing:1px;">LEYENDA</div>
+          <div class="legend-item"><span>🟢</span><div style="font-size:11px;">Zona 1σ — 68% probabilidad — Patrullaje prioritario</div></div>
+          <div class="legend-item"><span>🟡</span><div style="font-size:11px;">Zona 2σ — 95% probabilidad — Vigilancia activa</div></div>
+          <div class="legend-item"><span>🔴</span><div style="font-size:11px;">Zona 3σ — 99% probabilidad — Área de influencia</div></div>
+          <div class="legend-item"><span>⚓</span><div style="font-size:11px;">Punto de anclaje Spider Mean</div></div>
+          <div class="legend-item"><span>🟣</span><div style="font-size:11px;">Predicción próximo evento MSD</div></div>
+        </div>
+        <div class="panel col-side">
+          <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:10px;letter-spacing:1px;">CAPAS ACTIVAS</div>
+          <div id="map-layers"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTELIGENCIA -->
+    <div id="screen-intel" class="screen">
+      <div class="sec-hdr"><span class="sec-icon">🤖</span><div><div class="sec-title">INTELIGENCIA OPERATIVA IA</div><div class="sec-sub">Análisis y recomendaciones automáticas por inteligencia artificial</div></div></div>
+      <div class="two-col">
+        <div class="panel col-main">
+          <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:10px;letter-spacing:1px;">📊 RESUMEN EJECUTIVO AUTOMÁTICO</div>
+          <button class="btn btn-primary" id="btn-analysis" onclick="generateAnalysis()" style="margin-bottom:12px;">⚡ Generar Análisis IA</button>
+          <div id="analysis-placeholder" style="color:var(--dim);font-size:11px;font-style:italic;">Presione el botón para generar un resumen ejecutivo con IA basado en los incidentes registrados.</div>
+          <div id="analysis-box" style="display:none;"></div>
+        </div>
+        <div class="col-side">
+          <div class="panel">
+            <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:10px;letter-spacing:1px;">📈 KPIs DE SEGURIDAD</div>
+            <div id="kpi-intel"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:10px;letter-spacing:1px;">💬 CONSULTOR IA — INTELIGENCIA TÁCTICA</div>
+        <div id="chat-box"></div>
+        <div class="chat-input-row">
+          <input id="chat-input" placeholder="Consulta táctica operativa…" onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="btn btn-success" onclick="sendChat()">Enviar</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- FOOTER -->
+  <div id="footer">
+    <span>© <span class="author">Edward Quezada M.</span> &nbsp;|&nbsp; Profesional en Seguridad Patrimonial &nbsp;|&nbsp; Desarrollador de la Aplicación</span>
+    <span>RIS Intelligence &nbsp;<span class="author">v2.2.0</span></span>
+  </div>
+</div><!-- /app -->
+
+<div id="toast">✔ Incidente registrado</div>
+
+<script>
+// ── DATA & CONSTANTS ─────────────────────────────────────────────────────────
+const TIPOS = {
+  "Seguridad Patrimonial":["Robo","Hurto","Intrusión","Sabotaje","Vandalismo","Daño a la propiedad","Pérdida de activos","Hallazgos sospechosos","Amenazas"],
+  "BASC":["Contaminación de carga","Violación de sellos","Manipulación de mercancía","Riesgos en cadena logística"],
+  "Seguridad Alimentaria":["Contaminación intencional","Contaminación accidental","Incumplimiento de protocolos"],
+  "Defensa Alimentaria":["Actividades sospechosas","Acceso no autorizado","Amenazas internas"],
+  "Seguridad Vial":["Accidentes","Cuasi accidentes","Conducción insegura","Exceso de velocidad"],
+  "SSOMA":["Actos subestándar","Condiciones subestándar","Incidentes","Accidentes"]
+};
+const CRIT_SUBTIPO = {
+  "Robo":"Alto","Hurto":"Medio","Intrusión":"Alto","Sabotaje":"Crítico","Vandalismo":"Medio",
+  "Daño a la propiedad":"Medio","Pérdida de activos":"Alto","Hallazgos sospechosos":"Bajo","Amenazas":"Crítico",
+  "Contaminación de carga":"Crítico","Violación de sellos":"Crítico","Manipulación de mercancía":"Alto","Riesgos en cadena logística":"Alto",
+  "Contaminación intencional":"Crítico","Contaminación accidental":"Alto","Incumplimiento de protocolos":"Medio",
+  "Actividades sospechosas":"Medio","Acceso no autorizado":"Alto","Amenazas internas":"Crítico",
+  "Accidentes":"Alto","Cuasi accidentes":"Medio","Conducción insegura":"Medio","Exceso de velocidad":"Bajo",
+  "Actos subestándar":"Medio","Condiciones subestándar":"Medio","Incidentes":"Alto"
+};
+const CRIT_COLOR  = {"Crítico":"#ff3d5a","Alto":"#ff7a00","Medio":"#ffb800","Bajo":"#00ff9d"};
+const ESTADO_COLOR= {"Abierto":"#ff3d5a","En proceso":"#ffb800","Cerrado":"#00ff9d"};
+
+let incidents = [
+  {id:"RIS-001",fecha:"2026-05-12",hora:"22:15",tipo:"Seguridad Patrimonial",subtipo:"Robo",area:"Perímetro Norte",criticidad:"Alto",lat:-12.046,lng:-77.043,estado:"Cerrado",descripcion:"Sustracción de materiales en almacén exterior.",acciones:"Revisión CCTV, denuncia PNP."},
+  {id:"RIS-002",fecha:"2026-05-15",hora:"21:40",tipo:"Seguridad Patrimonial",subtipo:"Robo",area:"Sector B",criticidad:"Alto",lat:-12.040,lng:-77.038,estado:"En proceso",descripcion:"Robo de herramientas en taller.",acciones:"Investigación interna en curso."},
+  {id:"RIS-003",fecha:"2026-05-18",hora:"23:10",tipo:"Seguridad Patrimonial",subtipo:"Hurto",area:"Empaque",criticidad:"Medio",lat:-12.052,lng:-77.048,estado:"Cerrado",descripcion:"Hurto menor de insumos de empaque.",acciones:"Amonestación al personal."},
+  {id:"RIS-004",fecha:"2026-05-21",hora:"20:30",tipo:"BASC",subtipo:"Violación de sellos",area:"Logística",criticidad:"Crítico",lat:-12.044,lng:-77.036,estado:"Abierto",descripcion:"Sello roto en contenedor C-44.",acciones:"Alerta a gerencia, inspección."},
+  {id:"RIS-005",fecha:"2026-05-24",hora:"22:50",tipo:"Seguridad Patrimonial",subtipo:"Robo",area:"Perímetro Sur",criticidad:"Alto",lat:-12.038,lng:-77.043,estado:"En proceso",descripcion:"Ingreso no autorizado detectado por sensor.",acciones:"Patrulla desplegada."},
+  {id:"RIS-006",fecha:"2026-05-27",hora:"21:05",tipo:"Seguridad Patrimonial",subtipo:"Hurto",area:"Cosecha",criticidad:"Medio",lat:-12.054,lng:-77.041,estado:"Cerrado",descripcion:"Hurto de producto agrícola en campo.",acciones:"Cambio de turno revisado."},
+  {id:"RIS-007",fecha:"2026-06-03",hora:"23:25",tipo:"Seguridad Patrimonial",subtipo:"Robo",area:"Acceso Principal",criticidad:"Alto",lat:-12.046,lng:-77.046,estado:"Abierto",descripcion:"Vehículo sospechoso en acceso.",acciones:"Placa registrada, alerta activa."},
+  {id:"RIS-008",fecha:"2026-06-02",hora:"20:45",tipo:"SSOMA",subtipo:"Accidente",area:"Maquinaria",criticidad:"Crítico",lat:-12.049,lng:-77.037,estado:"Cerrado",descripcion:"Accidente con maquinaria agrícola.",acciones:"Primeros auxilios, SCTR activado."},
+  {id:"RIS-009",fecha:"2026-06-05",hora:"22:40",tipo:"Seguridad Patrimonial",subtipo:"Robo",area:"Perímetro Este",criticidad:"Alto",lat:-12.042,lng:-77.041,estado:"Abierto",descripcion:"Corte de cerco perimetral detectado.",acciones:"Reparación urgente en curso."},
+  {id:"RIS-010",fecha:"2026-06-07",hora:"21:55",tipo:"Seguridad Patrimonial",subtipo:"Robo",area:"Almacén Central",criticidad:"Crítico",lat:-12.047,lng:-77.044,estado:"En proceso",descripcion:"Robo múltiple en almacén central nocturno.",acciones:"Caso derivado a Fiscalía."}
+];
+
+let filterTipo="Todos", filterCrit="Todos", filterEst="Todos";
+let chatHistory=[], aiAnalysisText="", formOpen=false;
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
+function tickClock(){
+  const now=new Date();
+  const h=now.getHours().toString().padStart(2,'0');
+  const m=now.getMinutes().toString().padStart(2,'0');
+  const s=now.getSeconds().toString().padStart(2,'0');
+  document.getElementById('clock-time').textContent=`${h}:${m}:${s}`;
+  document.getElementById('clock-date').textContent=now.toLocaleDateString('es-PE',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  // Update form fields in real time if form is open
+  if(formOpen){
+    const fy=now.getFullYear(), fm=String(now.getMonth()+1).padStart(2,'0'), fd=String(now.getDate()).padStart(2,'0');
+    document.getElementById('form-fecha').textContent=`${fy}-${fm}-${fd}`;
+    document.getElementById('form-hora').textContent=`${h}:${m}:${s} hrs`;
+  }
+}
+setInterval(tickClock,1000);
+tickClock();
+
+// ── MATH ─────────────────────────────────────────────────────────────────────
+const mean=arr=>arr.reduce((s,v)=>s+v,0)/arr.length;
+const std=(arr,m)=>Math.sqrt(arr.reduce((s,v)=>s+(v-m)**2,0)/arr.length);
+function mode(arr){const f={};arr.forEach(v=>f[v]=(f[v]||0)+1);return Object.entries(f).sort((a,b)=>b[1]-a[1])[0]?.[0]||"";}
+
+function getGottlieb(){
+  if(!incidents.length)return null;
+  const lats=incidents.map(i=>i.lat),lngs=incidents.map(i=>i.lng);
+  const mLat=mean(lats),mLng=mean(lngs);
+  return{mLat,mLng,sLat:std(lats,mLat)||0.003,sLng:std(lngs,mLng)||0.004};
+}
+function getSpider(){
+  if(!incidents.length)return null;
+  const lats=incidents.map(i=>i.lat),lngs=incidents.map(i=>i.lng);
+  const anchor={lat:mean(lats),lng:mean(lngs)};
+  const dists=incidents.map(i=>Math.sqrt((i.lat-anchor.lat)**2+(i.lng-anchor.lng)**2)*111000);
+  const hours=incidents.map(i=>parseInt(i.hora.split(':')[0]));
+  return{anchor,avgDist:Math.round(mean(dists)),avgHour:Math.round(mean(hours)),modalSubtipo:mode(incidents.map(i=>i.subtipo))};
+}
+function getMSD(){
+  if(incidents.length<2)return null;
+  const sorted=[...incidents].sort((a,b)=>new Date(a.fecha+' '+a.hora)-new Date(b.fecha+' '+b.hora));
+  const gaps=[];
+  for(let i=1;i<sorted.length;i++){
+    gaps.push((new Date(sorted[i].fecha+' '+sorted[i].hora)-new Date(sorted[i-1].fecha+' '+sorted[i-1].hora))/(3600000));
+  }
+  const avgGap=mean(gaps);
+  const last=new Date(sorted[sorted.length-1].fecha+' '+sorted[sorted.length-1].hora);
+  const next=new Date(last.getTime()+avgGap*3600000);
+  return{next,avgGapHrs:Math.round(avgGap),confidence:incidents.length>=8?'ALTO':incidents.length>=5?'MEDIO':'BAJO'};
+}
+function getRiskLevel(){
+  const crit=incidents.filter(i=>i.criticidad==='Crítico').length;
+  const open=incidents.filter(i=>i.estado==='Abierto').length;
+  return crit>2?'Crítico':open>3?'Alto':incidents.length>6?'Moderado':'Bajo';
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function showTab(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(tab==='dashboard')renderDashboard();
+  if(tab==='registro')renderRegistro();
+  if(tab==='analisis')renderAnalisis();
+  if(tab==='mapa')renderMapa();
+  if(tab==='intel')renderIntel();
+}
+
+// ── BADGE HTML ────────────────────────────────────────────────────────────────
+function badge(text,color){
+  return `<span class="badge" style="background:${color}22;border:1px solid ${color};color:${color};">${text}</span>`;
+}
+
+// ── GAUGE ─────────────────────────────────────────────────────────────────────
+function drawGauge(level){
+  const svg=document.getElementById('gauge-svg');
+  const levels=['Bajo','Moderado','Alto','Crítico'];
+  const colors=['#00ff9d','#ffb800','#ff7a00','#ff3d5a'];
+  const idx=Math.max(0,levels.indexOf(level));
+  const angle=-135+(idx/3)*270;
+  const rad=angle*Math.PI/180;
+  const cx=60,cy=60,r=48;
+  let arcs='';
+  for(let i=0;i<4;i++){
+    const a1=(-135+i*67.5)*Math.PI/180, a2=(-135+(i+1)*67.5)*Math.PI/180;
+    arcs+=`<path d="M${cx+r*Math.cos(a1)},${cy+r*Math.sin(a1)} A${r},${r} 0 0,1 ${cx+r*Math.cos(a2)},${cy+r*Math.sin(a2)}" fill="none" stroke="${colors[i]}" stroke-width="10" stroke-linecap="butt" opacity="0.5"/>`;
+  }
+  const nx=cx+r*Math.cos(rad), ny=cy+r*Math.sin(rad);
+  svg.innerHTML=`${arcs}<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="4" fill="#fff"/><text x="${cx}" y="78" text-anchor="middle" fill="${colors[idx]}" font-size="10" font-weight="bold">${level}</text>`;
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const g=getGottlieb(), sp=getSpider(), msd=getMSD(), rl=getRiskLevel();
+  const criticos=incidents.filter(i=>i.criticidad==='Crítico').length;
+  const abiertos=incidents.filter(i=>i.estado==='Abierto').length;
+  const cerrados=incidents.filter(i=>i.estado==='Cerrado').length;
+
+  // KPIs
+  document.getElementById('kpi-row').innerHTML=`
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--accent)">${incidents.length}</div><div class="kpi-lbl">Total Incidentes</div><div class="kpi-sub">Todos los registros</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--red)">${abiertos}</div><div class="kpi-lbl">Abiertos</div><div class="kpi-sub">Requieren atención</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:#ff7a00">${criticos}</div><div class="kpi-lbl">Críticos</div><div class="kpi-sub">Prioridad máxima</div></div>
+    <div class="kpi-card"><div class="kpi-val" style="color:var(--green)">${cerrados}</div><div class="kpi-lbl">Resueltos</div><div class="kpi-sub">Casos cerrados</div></div>`;
+
+  // Risk badge header
+  const rc=CRIT_COLOR[rl]||'#aaa';
+  document.getElementById('risk-badge').textContent=`RIESGO ${rl.toUpperCase()}`;
+  document.getElementById('risk-badge').style.cssText=`background:${rc}22;border:1px solid ${rc};color:${rc};padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700;`;
+
+  // Gauge
+  drawGauge(rl);
+
+  // Alerts
+  const open=incidents.filter(i=>i.estado==='Abierto');
+  document.getElementById('alerts-list').innerHTML=open.length?open.map(i=>`
+    <div class="alert-item">
+      <div><span style="color:var(--accent);font-size:11px;font-weight:700;">${i.id}</span>
+      <span style="font-size:11px;margin-left:8px;">${i.subtipo} — ${i.area}</span></div>
+      ${badge(i.criticidad,CRIT_COLOR[i.criticidad])}
+    </div>`).join(''):'<div style="color:var(--dim);font-size:11px;">Sin alertas activas.</div>';
+
+  // Distribution
+  document.getElementById('dist-chart').innerHTML=Object.keys(TIPOS).map(t=>{
+    const cnt=incidents.filter(i=>i.tipo===t).length;
+    const pct=incidents.length?Math.round((cnt/incidents.length)*100):0;
+    return `<div style="margin-bottom:7px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span>${t}</span><span style="color:var(--accent)">${cnt}</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div></div>`;
+  }).join('');
+
+  // MSD
+  const msdEl=document.getElementById('msd-panel');
+  if(msd){
+    const conf=msd.confidence==='ALTO'?'var(--green)':msd.confidence==='MEDIO'?'var(--amber)':'var(--dim)';
+    msdEl.innerHTML=`<div style="font-size:11px;color:var(--text);margin-bottom:4px;">Próximo evento estimado:</div>
+      <div style="font-size:13px;font-weight:700;color:var(--purple)">${msd.next.toLocaleDateString('es-PE')}</div>
+      <div style="font-size:12px;color:var(--purple)">${msd.next.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})}</div>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;font-size:10px;color:var(--dim);">Confianza: ${badge(msd.confidence,conf)}</div>
+      <div style="font-size:10px;color:var(--dim);margin-top:4px;">Intervalo promedio: ${msd.avgGapHrs}h</div>`;
+  } else { msdEl.innerHTML='<div style="color:var(--dim);font-size:11px;">Mínimo 2 incidentes.</div>'; }
+
+  // Spider
+  const spEl=document.getElementById('spider-panel');
+  if(sp){
+    spEl.innerHTML=`
+      <div style="font-size:9px;color:var(--dim);">Punto de anclaje</div><div style="font-size:12px;font-weight:600;margin-bottom:5px;">${sp.anchor.lat.toFixed(4)}, ${sp.anchor.lng.toFixed(4)}</div>
+      <div style="font-size:9px;color:var(--dim);">Dist. media</div><div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:5px;">${sp.avgDist} m</div>
+      <div style="font-size:9px;color:var(--dim);">Hora modal</div><div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:5px;">${sp.avgHour}:00 hrs</div>
+      <div style="font-size:9px;color:var(--dim);">Modalidad frecuente</div><div style="font-size:12px;font-weight:600;">${sp.modalSubtipo}</div>`;
+  } else { spEl.innerHTML='<div style="color:var(--dim);font-size:11px;">Sin datos.</div>'; }
+
+  // Recomendaciones
+  const avgH=sp?sp.avgHour:20;
+  document.getElementById('recomendaciones').innerHTML=[
+    'Incrementar patrullaje en Zona 1σ (radio ~500m del punto de anclaje).',
+    `Reforzar vigilancia entre ${avgH}:00 y 02:00 horas.`,
+    'Implementar controles móviles en accesos perimetrales.',
+    'Activar drones DJI para inspección perimetral nocturna.',
+    'Reforzar controles de acceso en sector de mayor frecuencia.',
+    'Ejecutar auditoría BASC focalizada en área logística.'
+  ].map(r=>`<div class="rec-item"><span style="color:var(--accent);font-weight:700;margin-right:5px;">▸</span>${r}</div>`).join('');
+}
+
+// ── REGISTRO ──────────────────────────────────────────────────────────────────
+function renderRegistro(){
+  filterCrit=document.getElementById('filter-crit').value;
+  filterEst=document.getElementById('filter-est').value;
+  // Tipo filter buttons
+  const row=document.getElementById('filter-tipo-row');
+  row.innerHTML=['Todos',...Object.keys(TIPOS)].map(t=>
+    `<button class="filter-btn${filterTipo===t?' active':''}" onclick="setTipoFilter('${t}')">${t}</button>`
+  ).join('');
+  // Table
+  const filtered=incidents.filter(i=>
+    (filterTipo==='Todos'||i.tipo===filterTipo)&&
+    (filterCrit==='Todos'||i.criticidad===filterCrit)&&
+    (filterEst==='Todos'||i.estado===filterEst)
+  );
+  document.getElementById('inc-table-body').innerHTML=filtered.length?filtered.map(i=>`
+    <tr>
+      <td style="color:var(--accent);font-weight:700;">${i.id}</td>
+      <td>${i.fecha}</td><td>${i.hora}</td><td>${i.tipo}</td><td>${i.subtipo}</td><td>${i.area}</td>
+      <td>${badge(i.criticidad,CRIT_COLOR[i.criticidad])}</td>
+      <td>${badge(i.estado,ESTADO_COLOR[i.estado])}</td>
+    </tr>`).join('')
+    :`<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--dim);">Sin resultados para los filtros seleccionados.</td></tr>`;
+}
+function setTipoFilter(t){filterTipo=t;renderRegistro();}
+
+// ── GPS CAPTURE ──────────────────────────────────────────────────────────────
+function captureGPS(){
+  const btn=document.getElementById('btn-gps');
+  const status=document.getElementById('gps-status');
+  if(!navigator.geolocation){
+    status.style.color='var(--red)';
+    status.textContent='⚠ Su dispositivo no soporta GPS.';
+    return;
+  }
+  btn.textContent='⏳ Obteniendo...';
+  btn.disabled=true;
+  status.style.color='var(--amber)';
+  status.textContent='📡 Buscando señal GPS...';
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      const lat=pos.coords.latitude.toFixed(6);
+      const lng=pos.coords.longitude.toFixed(6);
+      const acc=Math.round(pos.coords.accuracy);
+      document.getElementById('f-lat').value=lat;
+      document.getElementById('f-lng').value=lng;
+      btn.textContent='✔ GPS Capturado';
+      btn.style.background='var(--accent)';
+      status.style.color='var(--green)';
+      status.textContent=`✔ Ubicación capturada — Lat: ${lat} | Lng: ${lng} | Precisión: ±${acc}m`;
+      setTimeout(()=>{btn.textContent='📍 Actualizar GPS';btn.disabled=false;},2000);
+    },
+    function(err){
+      btn.textContent='📍 Reintentar GPS';
+      btn.disabled=false;
+      btn.style.background='var(--green)';
+      status.style.color='var(--red)';
+      const msgs={1:'⚠ Permiso denegado. Active la ubicación en Ajustes del dispositivo.',2:'⚠ Señal GPS no disponible. Intente en área abierta.',3:'⚠ Tiempo de espera agotado. Reintente.'};
+      status.textContent=msgs[err.code]||'⚠ Error al obtener GPS.';
+    },
+    {enableHighAccuracy:true, timeout:15000, maximumAge:0}
+  );
+}
+
+// ── FORM ──────────────────────────────────────────────────────────────────────
+function toggleForm(){
+  formOpen=!formOpen;
+  document.getElementById('inc-form').style.display=formOpen?'block':'none';
+  if(formOpen){
+    initSubtipos();
+    onSubtipoChange();
+    tickClock(); // immediate sync
+  }
+}
+function initSubtipos(){
+  const tipo=document.getElementById('f-tipo').value;
+  const sel=document.getElementById('f-subtipo');
+  sel.innerHTML=TIPOS[tipo].map(s=>`<option>${s}</option>`).join('');
+}
+function onTipoChange(){
+  initSubtipos();
+  onSubtipoChange();
+}
+function onSubtipoChange(){
+  const st=document.getElementById('f-subtipo').value;
+  const crit=CRIT_SUBTIPO[st]||'Medio';
+  const col=CRIT_COLOR[crit];
+  const el=document.getElementById('f-crit-display');
+  el.textContent=`● ${crit}`;
+  el.style.background=col+'18';
+  el.style.border=`1px solid ${col}`;
+  el.style.color=col;
+}
+function addIncident(){
+  const now=new Date();
+  const fecha=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const hora=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const subtipo=document.getElementById('f-subtipo').value;
+  const inc={
+    id:`RIS-${String(incidents.length+1).padStart(3,'0')}`,
+    fecha, hora,
+    tipo:document.getElementById('f-tipo').value,
+    subtipo,
+    area:document.getElementById('f-area').value||'Sin área',
+    criticidad:CRIT_SUBTIPO[subtipo]||'Medio',
+    lat:parseFloat(document.getElementById('f-lat').value)||(-12.046),
+    lng:parseFloat(document.getElementById('f-lng').value)||(-77.043),
+    estado:document.getElementById('f-estado').value,
+    descripcion:document.getElementById('f-desc').value,
+    acciones:document.getElementById('f-acc').value
+  };
+  incidents.push(inc);
+  // Reset form
+  document.getElementById('f-area').value='';
+  document.getElementById('f-lat').value='';
+  document.getElementById('f-lng').value='';
+  document.getElementById('btn-gps').textContent='📍 Capturar GPS';
+  document.getElementById('btn-gps').style.background='var(--green)';
+  document.getElementById('btn-gps').disabled=false;
+  document.getElementById('gps-status').style.color='var(--dim)';
+  document.getElementById('gps-status').textContent='Presione el botón para capturar su ubicación actual.';
+  document.getElementById('f-desc').value='';
+  document.getElementById('f-acc').value='';
+  formOpen=false;
+  document.getElementById('inc-form').style.display='none';
+  renderRegistro();
+  showToast('✔ Incidente '+inc.id+' registrado');
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.opacity='1';
+  setTimeout(()=>t.style.opacity='0',2500);
+}
+
+// ── ANÁLISIS ──────────────────────────────────────────────────────────────────
+function renderAnalisis(){
+  const g=getGottlieb(), sp=getSpider(), msd=getMSD();
+  // Gottlieb
+  document.getElementById('gottlieb-panel').innerHTML=`
+    <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:12px;letter-spacing:1px;">① MÉTODO GOTTLIEB — ZONAS DE PATRULLAJE</div>
+    ${g?`<div style="margin-bottom:10px;"><div style="font-size:9px;color:var(--dim);">Centro geográfico</div><div style="font-size:13px;font-weight:700;color:#fff;">${g.mLat.toFixed(5)}, ${g.mLng.toFixed(5)}</div></div>
+    ${[['1σ — 68%','var(--green)',1],['2σ — 95%','var(--amber)',2],['3σ — 99%','var(--red)',3]].map(([lbl,col,m])=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
+        <div>${badge(lbl,col.replace('var(--','').replace(')',''))}<div style="font-size:9px;color:var(--dim);margin-top:2px;">Radio ≈ ${Math.round(g.sLat*m*111000)}m</div></div>
+        <div style="font-size:10px;color:${col};">Zona ${m}σ</div></div>`).join('')}
+    <div style="margin-top:8px;font-size:10px;color:var(--dim);">σ lat: ${Math.round(g.sLat*111000)}m &nbsp;|&nbsp; σ lng: ${Math.round(g.sLng*111000)}m</div>`
+    :'<div style="color:var(--dim);font-size:11px;">Sin datos suficientes.</div>'}`;
+
+  // Spider
+  document.getElementById('spider-analysis-panel').innerHTML=`
+    <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:12px;letter-spacing:1px;">② SPIDER MEAN — PERFILACIÓN CONDUCTUAL</div>
+    ${sp?[['Punto de anclaje',`${sp.anchor.lat.toFixed(4)}, ${sp.anchor.lng.toFixed(4)}`,'var(--accent)'],
+      ['Distancia media',`${sp.avgDist} metros`,'var(--amber)'],
+      ['Hora modal',`${sp.avgHour}:00 hrs`,'var(--red)'],
+      ['Modalidad frecuente',sp.modalSubtipo,'var(--purple)'],
+      ['Zona de confort',`Radio ~${Math.round(sp.avgDist*0.6)}m del anclaje`,'var(--green)'],
+      ['Nivel de planificación',sp.avgDist<500?'Bajo — oportunista':'Medio — semi-planificado','var(--text)']
+    ].map(([k,v,c])=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);"><div style="font-size:9px;color:var(--dim);margin-bottom:1px;">${k}</div><div style="font-size:12px;font-weight:600;color:${c};">${v}</div></div>`).join('')
+    :'<div style="color:var(--dim);font-size:11px;">Sin datos.</div>'}`;
+
+  // MSD
+  document.getElementById('msd-analysis-panel').innerHTML=`
+    <div style="font-size:11px;color:var(--purple);font-weight:700;margin-bottom:12px;letter-spacing:1px;">③ MSD — PREDICCIÓN TEMPORAL</div>
+    ${msd?[
+      ['Próxima fecha probable',msd.next.toLocaleDateString('es-PE',{weekday:'long',day:'2-digit',month:'long'}),'var(--purple)'],
+      ['Próxima hora probable',msd.next.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}),'var(--purple)'],
+      ['Intervalo promedio',`${msd.avgGapHrs} horas`,'var(--amber)'],
+      ['Nivel de confianza',msd.confidence,msd.confidence==='ALTO'?'var(--green)':msd.confidence==='MEDIO'?'var(--amber)':'var(--dim)'],
+      ['Ventana de riesgo',`${msd.next.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})} ± 2h`,'var(--red)']
+    ].map(([k,v,c])=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);"><div style="font-size:9px;color:var(--dim);margin-bottom:1px;">${k}</div><div style="font-size:12px;font-weight:600;color:${c};">${v}</div></div>`).join('')
+    :'<div style="color:var(--dim);font-size:11px;">Mínimo 2 incidentes para activar predicción.</div>'}`;
+
+  // Profile
+  document.getElementById('profile-grid').innerHTML=[
+    ['Género probable','Masculino'],['Edad estimada','20 – 40 años'],['Movilidad','A pie / Bicicleta'],
+    ['Patrón horario',sp?`Nocturno (${sp.avgHour}:00 – 02:00)`:'—'],
+    ['Radio de acción',sp?`${sp.avgDist} – ${sp.avgDist*2}m`:'—'],
+    ['Objetivo preferente',sp?sp.modalSubtipo:'Bienes de fácil acceso'],
+    ['Nivel de planificación',sp&&sp.avgDist<500?'Medio':'Bajo — oportunista'],
+    ['Punto de anclaje',sp?`${sp.anchor.lat.toFixed(4)},${sp.anchor.lng.toFixed(4)}`:'—']
+  ].map(([k,v])=>`<div class="profile-item"><div class="profile-key">${k}</div><div class="profile-val">${v}</div></div>`).join('');
+
+  // Heat tiles
+  const byArea={};incidents.forEach(i=>byArea[i.area]=(byArea[i.area]||0)+1);
+  document.getElementById('heat-tiles').innerHTML=Object.entries(byArea).sort((a,b)=>b[1]-a[1]).map(([area,cnt])=>{
+    const lvl=cnt>=3?'Crítico':cnt>=2?'Alto':cnt>=1?'Medio':'Bajo';
+    const col=CRIT_COLOR[lvl];
+    return `<div class="heat-tile" style="background:${col}18;border:1px solid ${col}44;">
+      <div class="heat-num" style="color:${col}">${cnt}</div>
+      <div class="heat-lbl" style="color:var(--text)">${area}</div>
+      ${badge(lvl,col)}</div>`;
+  }).join('');
+}
+
+// ── MAPA ──────────────────────────────────────────────────────────────────────
+function renderMapa(){
+  const g=getGottlieb(), sp=getSpider(), msd=getMSD();
+  const W=600,H=380;
+  if(!incidents.length){document.getElementById('map-svg').innerHTML='<text x="300" y="190" text-anchor="middle" fill="#4a6b8a" font-size="14">Sin incidentes para mapear.</text>';return;}
+  const lats=incidents.map(i=>i.lat),lngs=incidents.map(i=>i.lng);
+  const minLat=Math.min(...lats)-0.008, maxLat=Math.max(...lats)+0.008;
+  const minLng=Math.min(...lngs)-0.01,  maxLng=Math.max(...lngs)+0.01;
+  const px=(lat,lng)=>({
+    x:((lng-minLng)/(maxLng-minLng))*(W-60)+30,
+    y:((maxLat-lat)/(maxLat-minLat))*(H-60)+30
+  });
+  const c=g?px(g.mLat,g.mLng):{x:W/2,y:H/2};
+  const latS=(H-60)/(maxLat-minLat), lngS=(W-60)/(maxLng-minLng);
+  const rx1=g?g.sLng*lngS:15, ry1=g?g.sLat*latS:12;
+  let svg='';
+  // Grid
+  for(let i=0;i<6;i++) svg+=`<line x1="${30+i*(W-60)/5}" y1="30" x2="${30+i*(W-60)/5}" y2="${H-30}" stroke="#0d2040" stroke-width="1"/>`;
+  for(let i=0;i<5;i++) svg+=`<line x1="30" y1="${30+i*(H-60)/4}" x2="${W-30}" y2="${30+i*(H-60)/4}" stroke="#0d2040" stroke-width="1"/>`;
+  // Ellipses
+  if(g){
+    svg+=`<ellipse cx="${c.x}" cy="${c.y}" rx="${rx1*3}" ry="${ry1*3}" fill="none" stroke="#ff3d5a33" stroke-width="1.5" stroke-dasharray="6,4"/>`;
+    svg+=`<ellipse cx="${c.x}" cy="${c.y}" rx="${rx1*2}" ry="${ry1*2}" fill="none" stroke="#ffb80055" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    svg+=`<ellipse cx="${c.x}" cy="${c.y}" rx="${rx1}" ry="${ry1}" fill="#00ff9d10" stroke="#00ff9d" stroke-width="2"/>`;
+    svg+=`<text x="${c.x+rx1*3+4}" y="${c.y}" fill="#ff3d5a" font-size="10">3σ</text>`;
+    svg+=`<text x="${c.x+rx1*2+4}" y="${c.y}" fill="#ffb800" font-size="10">2σ</text>`;
+    svg+=`<text x="${c.x+rx1+4}" y="${c.y}" fill="#00ff9d" font-size="10">1σ</text>`;
+    svg+=`<circle cx="${c.x}" cy="${c.y}" r="7" fill="#00d4ff" stroke="#fff" stroke-width="1.5"/>`;
+  }
+  // MSD next
+  if(msd){
+    const np=px(lats[lats.length-1]+0.003,lngs[lngs.length-1]+0.004);
+    svg+=`<circle cx="${np.x}" cy="${np.y}" r="10" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="3,2"/>`;
+    svg+=`<circle cx="${np.x}" cy="${np.y}" r="3" fill="#a855f7"/>`;
+    svg+=`<text x="${np.x+12}" y="${np.y+4}" fill="#a855f7" font-size="9">Próximo</text>`;
+  }
+  // Incidents
+  incidents.forEach(i=>{
+    const p=px(i.lat,i.lng), col=CRIT_COLOR[i.criticidad]||'#aaa';
+    svg+=`<circle cx="${p.x}" cy="${p.y}" r="6" fill="${col}" opacity="0.85"/>`;
+    svg+=`<text x="${p.x+8}" y="${p.y+4}" fill="${col}" font-size="8">${i.id}</text>`;
+  });
+  svg+=`<text x="${W-44}" y="${H-12}" fill="#4a6b8a" font-size="11">N↑</text>`;
+  document.getElementById('map-svg').setAttribute('viewBox',`0 0 ${W} ${H}`);
+  document.getElementById('map-svg').style.background='#030a15';
+  document.getElementById('map-svg').innerHTML=svg;
+  // Layers
+  document.getElementById('map-layers').innerHTML=
+    ['Incidentes georreferenciados','Elipses Gottlieb (1σ/2σ/3σ)','Punto de anclaje (Spider Mean)','Predicción próximo evento (MSD)','Heat map de densidad']
+    .map(l=>`<div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span style="font-size:11px;">${l}</span></div>`).join('');
+}
+
+// ── INTEL ─────────────────────────────────────────────────────────────────────
+function renderIntel(){
+  const criticos=incidents.filter(i=>i.criticidad==='Crítico').length;
+  const cerrados=incidents.filter(i=>i.estado==='Cerrado').length;
+  const abiertos=incidents.filter(i=>i.estado==='Abierto').length;
+  document.getElementById('kpi-intel').innerHTML=[
+    ['Tasa de resolución',incidents.length?`${Math.round((cerrados/incidents.length)*100)}%`:'—','var(--green)'],
+    ['Incidentes críticos',`${criticos} (${incidents.length?Math.round((criticos/incidents.length)*100):0}%)`,'var(--red)'],
+    ['Casos abiertos',`${abiertos}`,'var(--amber)'],
+    ['Eventos BASC',`${incidents.filter(i=>i.tipo==='BASC').length}`,'var(--purple)'],
+    ['Patrullaje prioritario','Zona 1σ','var(--accent)'],
+    ['Cobertura nocturna','20:00 – 02:00 hrs','var(--text)']
+  ].map(([k,v,c])=>`<div class="kpi-tbl-row"><span style="font-size:11px;color:var(--dim)">${k}</span><span style="font-size:12px;font-weight:700;color:${c}">${v}</span></div>`).join('');
+  // Restore analysis if exists
+  if(aiAnalysisText){
+    document.getElementById('analysis-placeholder').style.display='none';
+    document.getElementById('analysis-box').style.display='block';
+    document.getElementById('analysis-box').textContent=aiAnalysisText;
+  }
+  renderChat();
+}
+
+// ── AI ────────────────────────────────────────────────────────────────────────
+async function callClaude(prompt,sys){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,
+      system:sys||'Eres un experto en seguridad patrimonial. Responde en español, profesional y conciso.',
+      messages:[{role:'user',content:prompt}]})
+  });
+  const d=await r.json();
+  return d.content?.map(b=>b.text||'').join('')||'Sin respuesta.';
+}
+
+async function generateAnalysis(){
+  const btn=document.getElementById('btn-analysis');
+  btn.textContent='⏳ Analizando...';btn.disabled=true;
+  const g=getGottlieb(),sp=getSpider(),msd=getMSD();
+  const summary=incidents.slice(-10).map(i=>`[${i.id}] ${i.fecha} ${i.hora} – ${i.subtipo} en ${i.area} (${i.criticidad})`).join('\n');
+  const prompt=`Incidentes:\n${summary}\nCentro Gottlieb: ${g?`${g.mLat.toFixed(4)},${g.mLng.toFixed(4)}`:'N/A'}\nSpider: dist.media ${sp?sp.avgDist:0}m, hora modal ${sp?sp.avgHour:0}:00\nMSD: próximo ${msd?msd.next.toLocaleString('es-PE'):'N/A'}, confianza ${msd?msd.confidence:'N/A'}\n\nGenera Resumen Ejecutivo de Seguridad Patrimonial con: situación actual, tendencias, amenazas, predicción y 5 recomendaciones tácticas. Formato profesional con títulos en MAYÚSCULAS.`;
+  aiAnalysisText=await callClaude(prompt);
+  document.getElementById('analysis-placeholder').style.display='none';
+  document.getElementById('analysis-box').style.display='block';
+  document.getElementById('analysis-box').textContent=aiAnalysisText;
+  btn.textContent='⚡ Generar Análisis IA';btn.disabled=false;
+}
+
+async function sendChat(){
+  const inp=document.getElementById('chat-input');
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value='';
+  chatHistory.push({role:'user',content:msg});
+  renderChat();
+  const ctx=incidents.slice(-5).map(i=>`${i.id}: ${i.subtipo} en ${i.area} (${i.criticidad}) – ${i.fecha}`).join('; ');
+  const sys='Eres RIS Intelligence, asistente de inteligencia operativa para seguridad patrimonial en entornos agroindustriales. Responde en español con precisión táctica.';
+  const res=await callClaude(`Contexto: ${ctx}\n\nConsulta: ${msg}`,sys);
+  chatHistory.push({role:'assistant',content:res});
+  renderChat();
+}
+
+function renderChat(){
+  const box=document.getElementById('chat-box');
+  box.innerHTML=chatHistory.length?chatHistory.map(m=>
+    m.role==='user'
+      ?`<div class="chat-msg chat-user">${m.content}</div>`
+      :`<div class="chat-msg chat-ai"><div class="chat-ai-lbl">RIS INTELLIGENCE IA</div>${m.content}</div>`
+  ).join(''):'<div style="color:var(--dim);font-size:11px;font-style:italic;">Consulte sobre patrones, riesgos, predicciones o recomendaciones operativas…</div>';
+  box.scrollTop=box.scrollHeight;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('f-tipo')&&onTipoChange();
+renderDashboard();
+</script>
+
+<!-- PWA manifest inline -->
+<script>
+if('serviceWorker' in navigator){
+  const sw=`self.addEventListener('fetch',e=>{});`;
+  const blob=new Blob([sw],{type:'application/javascript'});
+  const swUrl=URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl);
+}
+const manifest={name:'RIS Intelligence',short_name:'RIS',start_url:'.',display:'standalone',background_color:'#050d1a',theme_color:'#050d1a',description:'Sistema de Reporte de Incidentes y Análisis Criminal Táctico Geográfico',icons:[{src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="32" fill="%23050d1a"/><text y="140" x="30" font-size="130">🛡</text></svg>',sizes:'192x192',type:'image/svg+xml'}]};
+const mblob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+const link=document.createElement('link');link.rel='manifest';link.href=URL.createObjectURL(mblob);
+document.head.appendChild(link);
+</script>
+</body>
+</html>
