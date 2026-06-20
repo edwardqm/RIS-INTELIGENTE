@@ -100,6 +100,20 @@ textarea.fc{resize:vertical}
 <body>
 <div id="app">
 
+<!-- DETAIL MODAL (fullscreen, read-only) -->
+<div id="detmodal" style="position:fixed;inset:0;background:rgba(3,10,21,.98);z-index:1000;overflow-y:auto;padding:16px;display:none">
+  <div style="max-width:560px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px">
+      <div>
+        <div style="font-size:9px;color:var(--dim);letter-spacing:1px">DETALLE DE INCIDENTE — SOLO LECTURA</div>
+        <div id="detid" style="font-size:18px;font-weight:800;color:var(--accent)"></div>
+      </div>
+      <button onclick="closeDetail()" class="btn bgh" style="padding:7px 12px;font-size:12px;flex-shrink:0">✕ Cerrar</button>
+    </div>
+    <div id="detbody"></div>
+  </div>
+</div>
+
 <!-- PERMISSIONS MODAL -->
 <div id="pm">
   <div style="max-width:460px;margin:0 auto">
@@ -154,6 +168,7 @@ textarea.fc{resize:vertical}
   <button class="nb" onclick="goTab('analisis',this)">🎯 Análisis</button>
   <button class="nb" onclick="goTab('mapa',this)">🗺️ Mapa</button>
   <button class="nb" onclick="goTab('intel',this)">🤖 Inteligencia</button>
+  <button class="nb" onclick="goTab('panel',this)" style="border-color:var(--purple);color:var(--purple)">🔐 Panel de Control</button>
   <button class="nb" onclick="openPM()" style="border-color:var(--amber);color:var(--amber)">⚙ Permisos</button>
 </div>
 
@@ -239,9 +254,24 @@ textarea.fc{resize:vertical}
             <option>Abierto</option><option>En proceso</option><option>Cerrado</option>
           </select>
         </div>
-        <div style="grid-column:1/-1">
-          <div class="fl">Área / Zona</div>
-          <input class="fc" id="farea" placeholder="Ej: Perímetro Norte"/>
+        <div>
+          <div class="fl">Zona</div>
+          <select class="fc" id="fzona"></select>
+        </div>
+        <div>
+          <div class="fl">Tipo de instalación</div>
+          <select class="fc" id="finsttipo" onchange="onInstTipo()">
+            <option value="Planta">Planta</option>
+            <option value="Fundo">Fundo</option>
+          </select>
+        </div>
+        <div>
+          <div class="fl" id="finstnombrelbl">Planta</div>
+          <select class="fc" id="finstnombre"></select>
+        </div>
+        <div>
+          <div class="fl">Área</div>
+          <select class="fc" id="fareatrab"></select>
         </div>
         <div style="grid-column:1/-1">
           <div class="fl">Coordenadas GPS</div>
@@ -266,9 +296,10 @@ textarea.fc{resize:vertical}
         <button class="btn bgh" onclick="togForm()">Cancelar</button>
       </div>
     </div>
+    <div style="font-size:9px;color:var(--dim);padding:0 2px 6px">💡 Doble clic / doble toque sobre una fila para ver el detalle en pantalla completa (solo lectura).</div>
     <div class="tw">
       <table><thead><tr>
-        <th>ID</th><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Subtipo</th><th>Área</th><th>Criticidad</th><th>Estado</th>
+        <th>ID</th><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Subtipo</th><th>Ubicación</th><th>Criticidad</th><th>Estado</th>
       </tr></thead>
       <tbody id="itbody"></tbody></table>
     </div>
@@ -337,6 +368,61 @@ textarea.fc{resize:vertical}
     </div>
   </div>
 
+  <!-- PANEL DE CONTROL -->
+  <div id="sc-panel" class="sc">
+    <div class="sh"><span style="font-size:18px">🔐</span><div><div class="st">PANEL DE CONTROL</div><div class="ss">Administración de datos maestros (Zonas, Plantas, Fundos, Áreas)</div></div></div>
+
+    <div id="panelLock" class="pn" style="max-width:320px;margin:30px auto;text-align:center">
+      <div style="font-size:28px;margin-bottom:6px">🔒</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:12px">Ingrese la clave de administrador para gestionar los datos maestros.</div>
+      <input id="panelPass" class="fc" type="password" inputmode="numeric" maxlength="4" placeholder="••••" style="text-align:center;font-size:20px;letter-spacing:8px;margin-bottom:10px" onkeydown="if(event.key==='Enter')checkPanelPass()"/>
+      <button class="btn ba" style="width:100%;padding:9px" onclick="checkPanelPass()">Ingresar</button>
+      <div id="panelErr" style="color:var(--red);font-size:10px;margin-top:8px;display:none">⚠ Clave incorrecta.</div>
+    </div>
+
+    <div id="panelBody" style="display:none">
+      <div class="tc">
+        <div class="pn cm">
+          <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:10px;letter-spacing:1px">📍 ZONAS</div>
+          <div id="listZonas" style="margin-bottom:8px"></div>
+          <div style="display:flex;gap:6px">
+            <input id="newZona" class="fc" placeholder="Ej: Zona Chiclayo" style="flex:1"/>
+            <button class="btn bg2" onclick="addMaestro('zonas','newZona')">+ Añadir</button>
+          </div>
+        </div>
+        <div class="pn cs">
+          <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:10px;letter-spacing:1px">🏭 PLANTAS</div>
+          <div id="listPlantas" style="margin-bottom:8px"></div>
+          <div style="display:flex;gap:6px">
+            <input id="newPlanta" class="fc" placeholder="Ej: Planta Empaque" style="flex:1"/>
+            <button class="btn bg2" onclick="addMaestro('plantas','newPlanta')">+ Añadir</button>
+          </div>
+        </div>
+      </div>
+      <div class="tc">
+        <div class="pn cm">
+          <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:10px;letter-spacing:1px">🌱 FUNDOS</div>
+          <div id="listFundos" style="margin-bottom:8px"></div>
+          <div style="display:flex;gap:6px">
+            <input id="newFundo" class="fc" placeholder="Ej: Fundo Santa Rosa" style="flex:1"/>
+            <button class="btn bg2" onclick="addMaestro('fundos','newFundo')">+ Añadir</button>
+          </div>
+        </div>
+        <div class="pn cs">
+          <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:10px;letter-spacing:1px">🗂 ÁREAS</div>
+          <div id="listAreas" style="margin-bottom:8px"></div>
+          <div style="display:flex;gap:6px">
+            <input id="newArea" class="fc" placeholder="Ej: Área de Calidad" style="flex:1"/>
+            <button class="btn bg2" onclick="addMaestro('areas','newArea')">+ Añadir</button>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:right;margin-top:4px">
+        <button class="btn bgh" onclick="lockPanel()">🔒 Bloquear panel</button>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /cnt -->
 
 <!-- FOOTER -->
@@ -372,17 +458,26 @@ var CSUB = {
 var CC = {'Crítico':'#ff3d5a','Alto':'#ff7a00','Medio':'#ffb800','Bajo':'#00ff9d'};
 var EC = {'Abierto':'#ff3d5a','En proceso':'#ffb800','Cerrado':'#00ff9d'};
 
+// Datos maestros editables desde el Panel de Control (clave 0000)
+var MAESTRO = {
+  zonas:   ['Zona Virú','Zona Trujillo','Zona Piura'],
+  plantas: ['Planta Principal','Planta Frío','Planta Congelado'],
+  fundos:  ['Fundo Agricultor','Fundo Agromas'],
+  areas:   ['Área de Fitosanidad','Área de Riego','Operaciones']
+};
+var panelUnlocked=false;
+
 var INCS = [
-  {id:'RIS-001',fecha:'2026-05-12',hora:'22:15',tipo:'Seguridad Patrimonial',subtipo:'Robo',area:'Perímetro Norte',criticidad:'Alto',lat:-12.046,lng:-77.043,estado:'Cerrado',desc:'Sustracción de materiales en almacén exterior.',acc:'Revisión CCTV, denuncia PNP.'},
-  {id:'RIS-002',fecha:'2026-05-15',hora:'21:40',tipo:'Seguridad Patrimonial',subtipo:'Robo',area:'Sector B',criticidad:'Alto',lat:-12.040,lng:-77.038,estado:'En proceso',desc:'Robo de herramientas en taller.',acc:'Investigación interna en curso.'},
-  {id:'RIS-003',fecha:'2026-05-18',hora:'23:10',tipo:'Seguridad Patrimonial',subtipo:'Hurto',area:'Empaque',criticidad:'Medio',lat:-12.052,lng:-77.048,estado:'Cerrado',desc:'Hurto menor de insumos.',acc:'Amonestación al personal.'},
-  {id:'RIS-004',fecha:'2026-05-21',hora:'20:30',tipo:'BASC',subtipo:'Violación de sellos',area:'Logística',criticidad:'Crítico',lat:-12.044,lng:-77.036,estado:'Abierto',desc:'Sello roto en contenedor C-44.',acc:'Alerta a gerencia.'},
-  {id:'RIS-005',fecha:'2026-05-24',hora:'22:50',tipo:'Seguridad Patrimonial',subtipo:'Robo',area:'Perímetro Sur',criticidad:'Alto',lat:-12.038,lng:-77.043,estado:'En proceso',desc:'Ingreso no autorizado por sensor.',acc:'Patrulla desplegada.'},
-  {id:'RIS-006',fecha:'2026-05-27',hora:'21:05',tipo:'Seguridad Patrimonial',subtipo:'Hurto',area:'Cosecha',criticidad:'Medio',lat:-12.054,lng:-77.041,estado:'Cerrado',desc:'Hurto de producto agrícola.',acc:'Cambio de turno revisado.'},
-  {id:'RIS-007',fecha:'2026-06-03',hora:'23:25',tipo:'Seguridad Patrimonial',subtipo:'Robo',area:'Acceso Principal',criticidad:'Alto',lat:-12.046,lng:-77.046,estado:'Abierto',desc:'Vehículo sospechoso en acceso.',acc:'Placa registrada.'},
-  {id:'RIS-008',fecha:'2026-06-02',hora:'20:45',tipo:'SSOMA',subtipo:'Accidentes',area:'Maquinaria',criticidad:'Crítico',lat:-12.049,lng:-77.037,estado:'Cerrado',desc:'Accidente con maquinaria.',acc:'SCTR activado.'},
-  {id:'RIS-009',fecha:'2026-06-05',hora:'22:40',tipo:'Seguridad Patrimonial',subtipo:'Robo',area:'Perímetro Este',criticidad:'Alto',lat:-12.042,lng:-77.041,estado:'Abierto',desc:'Corte de cerco perimetral.',acc:'Reparación en curso.'},
-  {id:'RIS-010',fecha:'2026-06-07',hora:'21:55',tipo:'Seguridad Patrimonial',subtipo:'Robo',area:'Almacén Central',criticidad:'Crítico',lat:-12.047,lng:-77.044,estado:'En proceso',desc:'Robo múltiple nocturno.',acc:'Caso en Fiscalía.'}
+  {id:'RIS-001',fecha:'2026-05-12',hora:'22:15',tipo:'Seguridad Patrimonial',subtipo:'Robo',zona:'Zona Virú',instTipo:'Fundo',instNombre:'Fundo Agromas',areaTrab:'Área de Fitosanidad',area:'Zona Virú · Fundo Agromas · Área de Fitosanidad',criticidad:'Alto',lat:-12.046,lng:-77.043,estado:'Cerrado',desc:'Sustracción de materiales en almacén exterior.',acc:'Revisión CCTV, denuncia PNP.'},
+  {id:'RIS-002',fecha:'2026-05-15',hora:'21:40',tipo:'Seguridad Patrimonial',subtipo:'Robo',zona:'Zona Trujillo',instTipo:'Planta',instNombre:'Planta Principal',areaTrab:'Operaciones',area:'Zona Trujillo · Planta Principal · Operaciones',criticidad:'Alto',lat:-12.040,lng:-77.038,estado:'En proceso',desc:'Robo de herramientas en taller.',acc:'Investigación interna en curso.'},
+  {id:'RIS-003',fecha:'2026-05-18',hora:'23:10',tipo:'Seguridad Patrimonial',subtipo:'Hurto',zona:'Zona Piura',instTipo:'Fundo',instNombre:'Fundo Agricultor',areaTrab:'Área de Riego',area:'Zona Piura · Fundo Agricultor · Área de Riego',criticidad:'Medio',lat:-12.052,lng:-77.048,estado:'Cerrado',desc:'Hurto menor de insumos.',acc:'Amonestación al personal.'},
+  {id:'RIS-004',fecha:'2026-05-21',hora:'20:30',tipo:'BASC',subtipo:'Violación de sellos',zona:'Zona Virú',instTipo:'Planta',instNombre:'Planta Frío',areaTrab:'Operaciones',area:'Zona Virú · Planta Frío · Operaciones',criticidad:'Crítico',lat:-12.044,lng:-77.036,estado:'Abierto',desc:'Sello roto en contenedor C-44.',acc:'Alerta a gerencia.'},
+  {id:'RIS-005',fecha:'2026-05-24',hora:'22:50',tipo:'Seguridad Patrimonial',subtipo:'Robo',zona:'Zona Trujillo',instTipo:'Fundo',instNombre:'Fundo Agromas',areaTrab:'Área de Fitosanidad',area:'Zona Trujillo · Fundo Agromas · Área de Fitosanidad',criticidad:'Alto',lat:-12.038,lng:-77.043,estado:'En proceso',desc:'Ingreso no autorizado por sensor.',acc:'Patrulla desplegada.'},
+  {id:'RIS-006',fecha:'2026-05-27',hora:'21:05',tipo:'Seguridad Patrimonial',subtipo:'Hurto',zona:'Zona Piura',instTipo:'Fundo',instNombre:'Fundo Agricultor',areaTrab:'Área de Riego',area:'Zona Piura · Fundo Agricultor · Área de Riego',criticidad:'Medio',lat:-12.054,lng:-77.041,estado:'Cerrado',desc:'Hurto de producto agrícola.',acc:'Cambio de turno revisado.'},
+  {id:'RIS-007',fecha:'2026-06-03',hora:'23:25',tipo:'Seguridad Patrimonial',subtipo:'Robo',zona:'Zona Virú',instTipo:'Planta',instNombre:'Planta Principal',areaTrab:'Operaciones',area:'Zona Virú · Planta Principal · Operaciones',criticidad:'Alto',lat:-12.046,lng:-77.046,estado:'Abierto',desc:'Vehículo sospechoso en acceso.',acc:'Placa registrada.'},
+  {id:'RIS-008',fecha:'2026-06-02',hora:'20:45',tipo:'SSOMA',subtipo:'Accidentes',zona:'Zona Trujillo',instTipo:'Planta',instNombre:'Planta Congelado',areaTrab:'Operaciones',area:'Zona Trujillo · Planta Congelado · Operaciones',criticidad:'Crítico',lat:-12.049,lng:-77.037,estado:'Cerrado',desc:'Accidente con maquinaria.',acc:'SCTR activado.'},
+  {id:'RIS-009',fecha:'2026-06-05',hora:'22:40',tipo:'Seguridad Patrimonial',subtipo:'Robo',zona:'Zona Virú',instTipo:'Fundo',instNombre:'Fundo Agromas',areaTrab:'Área de Fitosanidad',area:'Zona Virú · Fundo Agromas · Área de Fitosanidad',criticidad:'Alto',lat:-12.042,lng:-77.041,estado:'Abierto',desc:'Corte de cerco perimetral.',acc:'Reparación en curso.'},
+  {id:'RIS-010',fecha:'2026-06-07',hora:'21:55',tipo:'Seguridad Patrimonial',subtipo:'Robo',zona:'Zona Piura',instTipo:'Planta',instNombre:'Planta Principal',areaTrab:'Operaciones',area:'Zona Piura · Planta Principal · Operaciones',criticidad:'Crítico',lat:-12.047,lng:-77.044,estado:'En proceso',desc:'Robo múltiple nocturno.',acc:'Caso en Fiscalía.'}
 ];
 
 var fTipo='Todos', chatHist=[], aiTxt='', formOpen=false;
@@ -499,6 +594,7 @@ function goTab(id, btn){
   if(id==='analisis') renderAn();
   if(id==='mapa') renderMap();
   if(id==='intel') renderIntel();
+  if(id==='panel'){ if(panelUnlocked) renderMaestroLists(); }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -630,7 +726,7 @@ function renderReg(){
   if(fil.length){
     for(var i=0;i<fil.length;i++){
       var inc=fil[i];
-      th+='<tr><td style="color:var(--accent);font-weight:700">'+inc.id+'</td><td>'+inc.fecha+'</td><td>'+inc.hora+'</td><td>'+inc.tipo+'</td><td>'+inc.subtipo+'</td><td>'+inc.area+'</td><td>'+bdg(inc.criticidad,CC[inc.criticidad])+'</td><td>'+bdg(inc.estado,EC[inc.estado])+'</td></tr>';
+      th+='<tr ondblclick="openDetail(\''+inc.id+'\')" style="cursor:pointer" title="Doble clic para ver detalle"><td style="color:var(--accent);font-weight:700">'+inc.id+'</td><td>'+inc.fecha+'</td><td>'+inc.hora+'</td><td>'+inc.tipo+'</td><td>'+inc.subtipo+'</td><td>'+inc.area+'</td><td>'+bdg(inc.criticidad,CC[inc.criticidad])+'</td><td>'+bdg(inc.estado,EC[inc.estado])+'</td></tr>';
     }
   } else th='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--dim)">Sin resultados.</td></tr>';
   document.getElementById('itbody').innerHTML=th;
@@ -643,7 +739,7 @@ function setFT(t){ fTipo=t; renderReg(); }
 function togForm(){
   formOpen=!formOpen;
   document.getElementById('incform').style.display=formOpen?'block':'none';
-  if(formOpen){ initSubt(); onSubt(); }
+  if(formOpen){ initSubt(); onSubt(); populateMaestroSelects(); }
 }
 function initSubt(){
   var t=document.getElementById('ftipo').value;
@@ -663,17 +759,44 @@ function onSubt(){
   el.style.border='1px solid '+col;
   el.style.color=col;
 }
+
+// ═══════════════════════════════════════════════════════
+// SELECTS DE DATOS MAESTROS (Zona / Instalación / Área)
+// ═══════════════════════════════════════════════════════
+function fillSelect(id, arr){
+  var sel=document.getElementById(id);
+  if(!sel) return;
+  if(!arr.length){ sel.innerHTML='<option value="">— Sin registros —</option>'; return; }
+  var h='';
+  for(var i=0;i<arr.length;i++) h+='<option>'+arr[i]+'</option>';
+  sel.innerHTML=h;
+}
+function populateMaestroSelects(){
+  fillSelect('fzona', MAESTRO.zonas);
+  onInstTipo();
+  fillSelect('fareatrab', MAESTRO.areas);
+}
+function onInstTipo(){
+  var t=document.getElementById('finsttipo').value;
+  document.getElementById('finstnombrelbl').textContent=t;
+  fillSelect('finstnombre', t==='Planta'?MAESTRO.plantas:MAESTRO.fundos);
+}
 function addInc(){
   var n=new Date();
   var fecha=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());
   var hora=pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
   var st=document.getElementById('fsubt').value;
+  var zona=document.getElementById('fzona').value||'Sin zona';
+  var instTipo=document.getElementById('finsttipo').value;
+  var instNombre=document.getElementById('finstnombre').value||'Sin '+instTipo.toLowerCase();
+  var areaTrab=document.getElementById('fareatrab').value||'Sin área';
   var inc={
     id:'RIS-'+pad2(INCS.length+1),
     fecha:fecha, hora:hora,
     tipo:document.getElementById('ftipo').value,
     subtipo:st,
-    area:document.getElementById('farea').value||'Sin área',
+    zona:zona, instTipo:instTipo, instNombre:instNombre, areaTrab:areaTrab,
+    area:zona+' · '+instNombre+' · '+areaTrab,
     criticidad:CSUB[st]||'Medio',
     lat:parseFloat(document.getElementById('flat').value)||(-12.046),
     lng:parseFloat(document.getElementById('flng').value)||(-77.043),
@@ -682,7 +805,6 @@ function addInc(){
     acc:document.getElementById('facc').value
   };
   INCS.push(inc);
-  document.getElementById('farea').value='';
   document.getElementById('flat').value='';
   document.getElementById('flng').value='';
   document.getElementById('fdesc').value='';
@@ -697,6 +819,91 @@ function addInc(){
   toast('✔ '+inc.id+' registrado');
 }
 function pad2(n){ return n<10?'00'+n:n<100?'0'+n:String(n); }
+
+// ═══════════════════════════════════════════════════════
+// DETALLE DE INCIDENTE (pantalla completa, solo lectura)
+// ═══════════════════════════════════════════════════════
+function openDetail(id){
+  var inc=null;
+  for(var i=0;i<INCS.length;i++){ if(INCS[i].id===id){ inc=INCS[i]; break; } }
+  if(!inc) return;
+  document.getElementById('detid').textContent=inc.id;
+  var rows=[
+    ['Fecha',inc.fecha],['Hora',inc.hora],
+    ['Tipo',inc.tipo],['Subtipo',inc.subtipo],
+    ['Criticidad',bdg(inc.criticidad,CC[inc.criticidad]||'#aaa')],
+    ['Estado',bdg(inc.estado,EC[inc.estado]||'#aaa')],
+    ['Zona',inc.zona||'—'],
+    ['Tipo de instalación',inc.instTipo||'—'],
+    ['Instalación',inc.instNombre||'—'],
+    ['Área',inc.areaTrab||'—'],
+    ['Ubicación completa',inc.area||'—'],
+    ['Coordenadas GPS', (inc.lat&&inc.lng)?(inc.lat+', '+inc.lng):'—']
+  ];
+  var h='<div class="pn">';
+  for(var i=0;i<rows.length;i++){
+    h+='<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:10px;color:var(--dim)">'+rows[i][0]+'</span><span style="font-size:12px;font-weight:600;text-align:right">'+rows[i][1]+'</span></div>';
+  }
+  h+='</div>';
+  h+='<div class="pn"><div class="fl" style="margin-bottom:4px">Descripción</div><div style="font-size:12px;line-height:1.6">'+(inc.desc||'—')+'</div></div>';
+  h+='<div class="pn"><div class="fl" style="margin-bottom:4px">Acciones inmediatas</div><div style="font-size:12px;line-height:1.6">'+(inc.acc||'—')+'</div></div>';
+  document.getElementById('detbody').innerHTML=h;
+  document.getElementById('detmodal').style.display='block';
+}
+function closeDetail(){ document.getElementById('detmodal').style.display='none'; }
+
+// ═══════════════════════════════════════════════════════
+// PANEL DE CONTROL — DATOS MAESTROS (clave 0000)
+// ═══════════════════════════════════════════════════════
+function checkPanelPass(){
+  var v=document.getElementById('panelPass').value;
+  if(v==='0000'){
+    panelUnlocked=true;
+    document.getElementById('panelLock').style.display='none';
+    document.getElementById('panelBody').style.display='block';
+    document.getElementById('panelErr').style.display='none';
+    document.getElementById('panelPass').value='';
+    renderMaestroLists();
+  } else {
+    document.getElementById('panelErr').style.display='block';
+    document.getElementById('panelPass').value='';
+  }
+}
+function lockPanel(){
+  panelUnlocked=false;
+  document.getElementById('panelLock').style.display='block';
+  document.getElementById('panelBody').style.display='none';
+}
+function renderMaestroLists(){
+  renderMList('zonas','listZonas');
+  renderMList('plantas','listPlantas');
+  renderMList('fundos','listFundos');
+  renderMList('areas','listAreas');
+}
+function renderMList(key,elId){
+  var arr=MAESTRO[key];
+  var h='';
+  if(!arr.length) h='<div style="color:var(--dim);font-size:10px;padding:6px 0">Sin registros.</div>';
+  for(var i=0;i<arr.length;i++){
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:11px">'+arr[i]+'</span><button onclick="delMaestro(\''+key+'\','+i+')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:13px" title="Eliminar">🗑</button></div>';
+  }
+  document.getElementById(elId).innerHTML=h;
+}
+function addMaestro(key,inputId){
+  var inp=document.getElementById(inputId);
+  var v=inp.value.trim();
+  if(!v){ toast('⚠ Ingrese un valor'); return; }
+  if(MAESTRO[key].indexOf(v)>=0){ toast('⚠ Ya existe'); return; }
+  MAESTRO[key].push(v);
+  inp.value='';
+  renderMaestroLists();
+  toast('✔ Añadido');
+}
+function delMaestro(key,idx){
+  MAESTRO[key].splice(idx,1);
+  renderMaestroLists();
+  toast('✔ Eliminado');
+}
 
 // ═══════════════════════════════════════════════════════
 // GPS
